@@ -42,7 +42,7 @@ const PomodoroTimer = {
         
         <!-- Círculo de progresso que se preenche -->
         <svg class="timer-progress" style="position: absolute; width: 100%; height: 100%; transform: rotate(-90deg);">
-          <circle class="timer-progress-ring" cx="${this.circuloCarregamentoTamanho/2}" cy="${this.circuloCarregamentoTamanho/2}" r="${radius}" stroke="#6C63FF" stroke-width="${this.circuloCarregamentoTamanhoBorda}" fill="transparent"></circle>
+          <circle class="timer-progress-ring" cx="${this.circuloCarregamentoTamanho/2}" cy="${this.circuloCarregamentoTamanho/2}" r="${radius}" stroke="#6C63FF" stroke-width="${this.circuloCarregamentoTamanhoBorda}" fill="transparent" stroke-linecap="round"></circle>
         </svg>
         
         <!-- Conteúdo central do timer -->
