@@ -21,48 +21,58 @@ const PomodoroTimer = {
     timerElement.id = 'pomodoro-timer';
     timerElement.classList.add('pomodoro-timer');
     
-    // Estilização para o container principal
+    // Estilização para o container principal - modificado para layout horizontal
     timerElement.style.display = 'flex';
-    timerElement.style.flexDirection = 'column';
+    timerElement.style.flexDirection = 'row';
     timerElement.style.alignItems = 'center';
     timerElement.style.justifyContent = 'center';
     timerElement.style.padding = '20px';
     timerElement.style.borderRadius = '10px';
     timerElement.style.fontFamily = 'Arial, sans-serif';
-    timerElement.style.color = '#333333'; // Alterado para uma cor escura
+    timerElement.style.color = '#333333';
     
     // Cálculo do raio com base nas configurações globais
     const radius = (this.circuloCarregamentoTamanho / 2) - (this.circuloCarregamentoTamanhoBorda / 2);
     
-    // Estrutura do timer
+    // Estrutura do timer com nova organização (timer à esquerda, controles à direita)
     timerElement.innerHTML = `
-      <div class="timer-circle-container" style="position: relative; width: ${this.circuloCarregamentoTamanho}px; height: ${this.circuloCarregamentoTamanho}px;">
-        <!-- Círculo de progresso de fundo -->
-        <div class="timer-progress-bg" style="position: absolute; width: 100%; height: 100%; border-radius: 50%; box-sizing: border-box; border: ${this.circuloCarregamentoTamanhoBorda}px solid #444450;"></div>
-        
-        <!-- Círculo de progresso que se preenche -->
-        <svg class="timer-progress" style="position: absolute; width: 100%; height: 100%; transform: rotate(-90deg);">
-          <circle class="timer-progress-ring" cx="${this.circuloCarregamentoTamanho/2}" cy="${this.circuloCarregamentoTamanho/2}" r="${radius}" stroke="#6C63FF" stroke-width="${this.circuloCarregamentoTamanhoBorda}" fill="transparent" stroke-linecap="round"></circle>
-        </svg>
-        
-        <!-- Conteúdo central do timer -->
-        <div class="timer-content" style="position: absolute; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; border-radius: 50%;">
-          <div class="timer-display" style="font-size: 54px; font-weight: bold; color: #333333;">${this.formatTime(this.state.timeLeft)}</div>
+      <div class="timer-left-container">
+        <div class="timer-circle-container" style="position: relative; width: ${this.circuloCarregamentoTamanho}px; height: ${this.circuloCarregamentoTamanho}px;">
+          <!-- Círculo de progresso de fundo -->
+          <div class="timer-progress-bg" style="position: absolute; width: 100%; height: 100%; border-radius: 50%; box-sizing: border-box; border: ${this.circuloCarregamentoTamanhoBorda}px solid #444450;"></div>
+          
+          <!-- Círculo de progresso que se preenche -->
+          <svg class="timer-progress" style="position: absolute; width: 100%; height: 100%; transform: rotate(-90deg);">
+            <circle class="timer-progress-ring" cx="${this.circuloCarregamentoTamanho/2}" cy="${this.circuloCarregamentoTamanho/2}" r="${radius}" stroke="#6C63FF" stroke-width="${this.circuloCarregamentoTamanhoBorda}" fill="transparent" stroke-linecap="round"></circle>
+          </svg>
+          
+          <!-- Conteúdo central do timer -->
+          <div class="timer-content" style="position: absolute; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; border-radius: 50%;">
+            <div class="timer-display" style="font-size: 54px; font-weight: bold; color: #333333;">${this.formatTime(this.state.timeLeft)}</div>
+          </div>
         </div>
       </div>
       
-      <!-- Controles principais do timer (play/pause e reset) -->
-      <div class="main-controls" style="margin-top: 20px; display: flex; justify-content: center; gap: 20px; margin-bottom: 15px;">
-        <button id="start-timer" title="Iniciar/Pausar" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #333340; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">▶</button>
-        <button id="reset-timer" title="Reiniciar" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #333340; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">↻</button>
-      </div>
-      
-      <!-- Controles de modo do timer -->
-      <div class="timer-modes" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-        <span style="margin-right: 5px; font-size: 16px; color: #333333;">Modo:</span>
-        <button id="pomodoro-mode" class="mode-btn active-mode" title="Pomodoro" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #472525; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">🍅</button>
-        <button id="short-break-mode" class="mode-btn" title="Pausa Curta" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #333340; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">☕</button>
-        <button id="long-break-mode" class="mode-btn" title="Pausa Longa" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #333340; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">☕<span style="font-size: 10px; position: relative; top: -8px;">x3</span></button>
+      <!-- Container para os controles e modos à direita -->
+      <div class="timer-right-controls" style="margin-left: 30px; display: flex; flex-direction: column; align-items: flex-start;">
+        
+        <!-- Controles principais do timer (play/pause e reset) -->
+        <div class="main-controls" style="display: flex; justify-content: flex-start; gap: 10px; margin-bottom: 30px;">
+          <button id="start-timer" title="Iniciar/Pausar" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #333340; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">▶</button>
+          <button id="reset-timer" title="Reiniciar" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #333340; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">↻</button>
+        </div>
+        
+        <!-- Texto para modos -->
+        <div class="modes-label" style="margin-bottom: 15px; font-size: 16px; color: #333333; font-weight: 600;">
+          Modos:
+        </div>
+        
+        <!-- Controles de modo do timer -->
+        <div class="timer-modes" style="display: flex; align-items: center; justify-content: flex-start; gap: 10px;">
+          <button id="pomodoro-mode" class="mode-btn active-mode" title="Pomodoro" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #472525; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">🍅</button>
+          <button id="short-break-mode" class="mode-btn" title="Pausa Curta" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #333340; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">☕</button>
+          <button id="long-break-mode" class="mode-btn" title="Pausa Longa" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #333340; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">☕<span style="font-size: 10px; position: relative; top: -8px;">x3</span></button>
+        </div>
       </div>
     `;
     
