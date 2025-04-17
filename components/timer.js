@@ -18,7 +18,10 @@ const PomodoroTimer = {
     timeLeft: 25 * 60, // 25 minutos em segundos
     totalTime: 25 * 60, // Tempo total do timer atual
     mode: 'pomodoro', // 'pomodoro', 'shortBreak', 'longBreak'
-    interval: null
+    interval: null,
+    startTimestamp: null, // Novo: armazena o timestamp de quando o timer começou
+    endTimestamp: null, // Novo: armazena o timestamp de quando o timer deve terminar
+    checkTimeoutId: null // Novo: para verificar a conclusão do timer
   },
 
   // Função para criar e renderizar o cronômetro
@@ -90,6 +93,9 @@ const PomodoroTimer = {
     
     // Adiciona os event listeners para os botões
     this.setupEventListeners();
+
+    // Novo: Adiciona listener para o evento de visibilidade da página
+    this.setupVisibilityListener();
     
     return timerElement;
   },
@@ -142,6 +148,16 @@ const PomodoroTimer = {
       this.setActiveButton('#long-break-mode');
     });
   },
+
+  // Novo: Configura listener para mudanças de visibilidade da página
+  setupVisibilityListener: function() {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && this.state.isRunning) {
+        // Recalcula o tempo restante quando a página fica visível novamente
+        this.updateTimeLeftBasedOnTimestamp();
+      }
+    });
+  },
   
   // Define o botão ativo (destaque visual)
   setActiveButton: function(buttonId) {
@@ -188,16 +204,59 @@ const PomodoroTimer = {
       startButton.innerHTML = '❚❚';
       startButton.title = 'Pausar';
     }
-    
+
+    // Novo: Define os timestamps de início e término
+    const now = Date.now();
+    this.state.startTimestamp = now;
+    this.state.endTimestamp = now + (this.state.timeLeft * 1000);
+
+    // Configura um intervalo para atualizar a exibição a cada segundo
     this.state.interval = setInterval(() => {
-      this.state.timeLeft -= 1;
+      this.updateTimeLeftBasedOnTimestamp();
       this.updateTimerDisplay();
       this.updateProgressRing();
-      
-      if (this.state.timeLeft <= 0) {
+    }, 900);
+
+    // Configura um timeout para verificar a conclusão do timer
+    this.scheduleCompletionCheck();
+  },
+  
+  // Novo: Atualiza o tempo restante com base no timestamp
+  updateTimeLeftBasedOnTimestamp: function() {
+    if (!this.state.isRunning || !this.state.endTimestamp) return;
+    
+    const now = Date.now();
+    const remaining = Math.max(0, Math.floor((this.state.endTimestamp - now) / 1000));
+    
+    // Atualiza o tempo restante
+    this.state.timeLeft = remaining;
+    
+    // Verifica se o timer chegou ao fim
+    if (this.state.timeLeft <= 0) {
+      this.timerComplete();
+    }
+  },
+
+  // Novo: Agenda verificação de conclusão do timer (funciona mesmo em segundo plano)
+  scheduleCompletionCheck: function() {
+    // Limpa qualquer verificação existente
+    if (this.state.checkTimeoutId) {
+      clearTimeout(this.state.checkTimeoutId);
+    }
+
+    // Se o timer não estiver rodando ou já estiver no fim, não agenda
+    if (!this.state.isRunning || this.state.timeLeft <= 0) return;
+
+    // Calcula o tempo exato para a conclusão
+    const timeToCompletion = this.state.timeLeft * 1000;
+    
+    // Configura um timeout que será executado no momento exato da conclusão
+    this.state.checkTimeoutId = setTimeout(() => {
+      // Verifica se o timer ainda está rodando quando o timeout executa
+      if (this.state.isRunning) {
         this.timerComplete();
       }
-    }, 1000);
+    }, timeToCompletion);
   },
   
   // Pausa o cronômetro
@@ -206,6 +265,12 @@ const PomodoroTimer = {
     
     this.state.isRunning = false;
     clearInterval(this.state.interval);
+    
+    // Novo: Limpa o timeout de verificação de conclusão
+    if (this.state.checkTimeoutId) {
+      clearTimeout(this.state.checkTimeoutId);
+      this.state.checkTimeoutId = null;
+    }
     
     // Atualiza o ícone do botão para play
     const startButton = document.querySelector('#start-timer');
@@ -221,6 +286,10 @@ const PomodoroTimer = {
     
     // Define o tempo baseado no modo atual
     this.setTimeForCurrentMode();
+    
+    // Novo: Limpa os timestamps
+    this.state.startTimestamp = null;
+    this.state.endTimestamp = null;
     
     this.updateTimerDisplay();
     this.updateProgressRing();
@@ -302,10 +371,17 @@ const PomodoroTimer = {
       startButton.innerHTML = '▶';
       startButton.title = 'Iniciar';
     }
+
+    // Novo: Limpa os timestamps ao trocar de modo
+    this.state.startTimestamp = null;
+    this.state.endTimestamp = null;
   },
   
   // Função chamada quando o timer chega a zero
   timerComplete: function() {
+    // Evita dupla execução
+    if (!this.state.isRunning) return;
+    
     this.pauseTimer();
     
     // Notificação de que o timer acabou
