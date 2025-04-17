@@ -2,10 +2,15 @@
 
 // Namespace para as funções do cronômetro
 const PomodoroTimer = {
+  // Configurações globais do círculo de carregamento
+  circuloCarregamentoTamanho: 250, // Tamanho do círculo em px
+  circuloCarregamentoTamanhoBorda: 24, // Espessura da borda em px
+
   // Estado inicial do timer
   state: {
     isRunning: false,
     timeLeft: 25 * 60, // 25 minutos em segundos
+    totalTime: 25 * 60, // Tempo total do timer atual
     mode: 'pomodoro', // 'pomodoro', 'shortBreak', 'longBreak'
     interval: null
   },
@@ -16,32 +21,56 @@ const PomodoroTimer = {
     timerElement.id = 'pomodoro-timer';
     timerElement.classList.add('pomodoro-timer');
     
-    // Estilização básica do timer
-    timerElement.style.fontSize = '24px';
-    timerElement.style.textAlign = 'center';
-    timerElement.style.padding = '10px';
-    timerElement.style.marginTop = '10px';
-    timerElement.style.backgroundColor = '#e44332'; // Cor vermelha para o modo pomodoro
-    timerElement.style.color = 'white';
-    timerElement.style.borderRadius = '5px';
+    // Estilização para o container principal
+    timerElement.style.display = 'flex';
+    timerElement.style.flexDirection = 'column';
+    timerElement.style.alignItems = 'center';
+    timerElement.style.justifyContent = 'center';
+    timerElement.style.padding = '20px';
+    timerElement.style.borderRadius = '10px';
+    timerElement.style.fontFamily = 'Arial, sans-serif';
+    timerElement.style.color = '#333333'; // Alterado para uma cor escura
+    
+    // Cálculo do raio com base nas configurações globais
+    const radius = (this.circuloCarregamentoTamanho / 2) - (this.circuloCarregamentoTamanhoBorda / 2);
     
     // Estrutura do timer
     timerElement.innerHTML = `
-      <div class="timer-display">${this.formatTime(this.state.timeLeft)}</div>
-      <div class="timer-controls" style="margin-top: 10px;">
-        <button id="start-timer" style="margin-right: 5px; padding: 5px 10px;">Iniciar</button>
-        <button id="pause-timer" style="margin-right: 5px; padding: 5px 10px;" disabled>Pausar</button>
-        <button id="reset-timer" style="padding: 5px 10px;">Reiniciar</button>
+      <div class="timer-circle-container" style="position: relative; width: ${this.circuloCarregamentoTamanho}px; height: ${this.circuloCarregamentoTamanho}px;">
+        <!-- Círculo de progresso de fundo -->
+        <div class="timer-progress-bg" style="position: absolute; width: 100%; height: 100%; border-radius: 50%; box-sizing: border-box; border: ${this.circuloCarregamentoTamanhoBorda}px solid #444450;"></div>
+        
+        <!-- Círculo de progresso que se preenche -->
+        <svg class="timer-progress" style="position: absolute; width: 100%; height: 100%; transform: rotate(-90deg);">
+          <circle class="timer-progress-ring" cx="${this.circuloCarregamentoTamanho/2}" cy="${this.circuloCarregamentoTamanho/2}" r="${radius}" stroke="#6C63FF" stroke-width="${this.circuloCarregamentoTamanhoBorda}" fill="transparent"></circle>
+        </svg>
+        
+        <!-- Conteúdo central do timer -->
+        <div class="timer-content" style="position: absolute; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; border-radius: 50%;">
+          <div class="timer-display" style="font-size: 54px; font-weight: bold; color: #333333;">${this.formatTime(this.state.timeLeft)}</div>
+        </div>
       </div>
-      <div class="timer-modes" style="margin-top: 10px;">
-        <button id="mode-pomodoro" style="margin-right: 5px; padding: 5px 10px; background-color: #e44332; color: white;">Pomodoro</button>
-        <button id="mode-short-break" style="margin-right: 5px; padding: 5px 10px;">Pausa Curta</button>
-        <button id="mode-long-break" style="padding: 5px 10px;">Pausa Longa</button>
+      
+      <!-- Controles principais do timer (play/pause e reset) -->
+      <div class="main-controls" style="margin-top: 20px; display: flex; justify-content: center; gap: 20px; margin-bottom: 15px;">
+        <button id="start-timer" title="Iniciar/Pausar" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #333340; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">▶</button>
+        <button id="reset-timer" title="Reiniciar" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #333340; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">↻</button>
+      </div>
+      
+      <!-- Controles de modo do timer -->
+      <div class="timer-modes" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+        <span style="margin-right: 5px; font-size: 16px; color: #333333;">Modo:</span>
+        <button id="pomodoro-mode" class="mode-btn active-mode" title="Pomodoro" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #472525; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">🍅</button>
+        <button id="short-break-mode" class="mode-btn" title="Pausa Curta" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #333340; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">☕</button>
+        <button id="long-break-mode" class="mode-btn" title="Pausa Longa" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #333340; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">☕<span style="font-size: 10px; position: relative; top: -8px;">x3</span></button>
       </div>
     `;
     
     // Adiciona o timer ao container
     container.appendChild(timerElement);
+    
+    // Configure a borda de progresso para indicar o estado inicial
+    this.setupProgressRing();
     
     // Adiciona os event listeners para os botões
     this.setupEventListeners();
@@ -49,21 +78,82 @@ const PomodoroTimer = {
     return timerElement;
   },
   
+  // Configura o anel de progresso inicial
+  setupProgressRing: function() {
+    const progressRing = document.querySelector('.timer-progress-ring');
+    if (progressRing) {
+      const radius = (this.circuloCarregamentoTamanho / 2) - (this.circuloCarregamentoTamanhoBorda / 2);
+      const circumference = 2 * Math.PI * radius;
+      progressRing.style.strokeDasharray = `${circumference}`;
+      progressRing.style.strokeDashoffset = '0';
+    }
+  },
+  
   // Configura os listeners de eventos para os botões do timer
   setupEventListeners: function() {
-    const pomodoroFlow = document.getElementById(POMODORO_FLOW_ID);
-    if (!pomodoroFlow) return; // Se o app Pomodoro Flow não existe, não faz nada
-
     const pomodoroTimer = document.getElementById('pomodoro-timer');
     if (!pomodoroTimer) return; // Se o timer não existe, não faz nada
 
-    pomodoroTimer.querySelector('#start-timer')?.addEventListener('click', () => this.startTimer());
-    pomodoroTimer.querySelector('#pause-timer')?.addEventListener('click', () => this.pauseTimer());
-    pomodoroTimer.querySelector('#reset-timer')?.addEventListener('click', () => this.resetTimer());
+    // Botão de iniciar/pausar
+    const startButton = pomodoroTimer.querySelector('#start-timer');
+    startButton?.addEventListener('click', () => {
+      if (this.state.isRunning) {
+        this.pauseTimer();
+      } else {
+        this.startTimer();
+      }
+    });
     
-    pomodoroTimer.querySelector('#mode-pomodoro')?.addEventListener('click', () => this.setMode('pomodoro'));
-    pomodoroTimer.querySelector('#mode-short-break')?.addEventListener('click', () => this.setMode('shortBreak'));
-    pomodoroTimer.querySelector('#mode-long-break')?.addEventListener('click', () => this.setMode('longBreak'));
+    // Botão de reiniciar
+    const resetButton = pomodoroTimer.querySelector('#reset-timer');
+    resetButton?.addEventListener('click', () => {
+      this.resetTimer();
+    });
+    
+    // Botões de modo
+    pomodoroTimer.querySelector('#pomodoro-mode')?.addEventListener('click', () => {
+      this.setMode('pomodoro');
+      this.setActiveButton('#pomodoro-mode');
+    });
+    
+    pomodoroTimer.querySelector('#short-break-mode')?.addEventListener('click', () => {
+      this.setMode('shortBreak');
+      this.setActiveButton('#short-break-mode');
+    });
+    
+    pomodoroTimer.querySelector('#long-break-mode')?.addEventListener('click', () => {
+      this.setMode('longBreak');
+      this.setActiveButton('#long-break-mode');
+    });
+  },
+  
+  // Define o botão ativo (destaque visual)
+  setActiveButton: function(buttonId) {
+    const modeButtons = document.querySelectorAll('.mode-btn');
+    modeButtons.forEach(btn => {
+      btn.style.backgroundColor = '#333340';
+      btn.classList.remove('active-mode');
+    });
+    
+    const activeButton = document.querySelector(buttonId);
+    if (activeButton) {
+      activeButton.style.backgroundColor = this.getModeColor();
+      activeButton.classList.add('active-mode');
+    }
+  },
+  
+  // Retorna a cor do modo atual
+  getModeColor: function() {
+    switch (this.state.mode) {
+      case 'pomodoro':
+        return '#472525'; // Alterado para o vermelho mais escuro para Pomodoro
+      case 'shortBreak':
+        return '#4c9195'; // Verde-azulado para pausa curta
+      case 'longBreak':
+        return '#457ca3'; // Azul para pausa longa
+      default:
+        return '#6C63FF';
+    }
   },
   
   // Inicia o cronômetro
@@ -71,12 +161,18 @@ const PomodoroTimer = {
     if (this.state.isRunning) return;
     
     this.state.isRunning = true;
-    document.getElementById('start-timer').disabled = true;
-    document.getElementById('pause-timer').disabled = false;
+    
+    // Atualiza o ícone do botão para pausa
+    const startButton = document.querySelector('#start-timer');
+    if (startButton) {
+      startButton.innerHTML = '❚❚';
+      startButton.title = 'Pausar';
+    }
     
     this.state.interval = setInterval(() => {
       this.state.timeLeft -= 1;
       this.updateTimerDisplay();
+      this.updateProgressRing();
       
       if (this.state.timeLeft <= 0) {
         this.timerComplete();
@@ -89,10 +185,14 @@ const PomodoroTimer = {
     if (!this.state.isRunning) return;
     
     this.state.isRunning = false;
-    document.getElementById('start-timer').disabled = false;
-    document.getElementById('pause-timer').disabled = true;
-    
     clearInterval(this.state.interval);
+    
+    // Atualiza o ícone do botão para play
+    const startButton = document.querySelector('#start-timer');
+    if (startButton) {
+      startButton.innerHTML = '▶';
+      startButton.title = 'Iniciar';
+    }
   },
   
   // Reinicia o cronômetro
@@ -100,19 +200,28 @@ const PomodoroTimer = {
     this.pauseTimer();
     
     // Define o tempo baseado no modo atual
+    this.setTimeForCurrentMode();
+    
+    this.updateTimerDisplay();
+    this.updateProgressRing();
+  },
+  
+  // Define o tempo com base no modo atual
+  setTimeForCurrentMode: function() {
     switch (this.state.mode) {
       case 'pomodoro':
         this.state.timeLeft = 25 * 60;
+        this.state.totalTime = 25 * 60;
         break;
       case 'shortBreak':
         this.state.timeLeft = 5 * 60;
+        this.state.totalTime = 5 * 60;
         break;
       case 'longBreak':
         this.state.timeLeft = 15 * 60;
+        this.state.totalTime = 15 * 60;
         break;
     }
-    
-    this.updateTimerDisplay();
   },
   
   // Atualiza o display do cronômetro
@@ -120,6 +229,22 @@ const PomodoroTimer = {
     const timerDisplay = document.querySelector('.timer-display');
     if (timerDisplay) {
       timerDisplay.textContent = this.formatTime(this.state.timeLeft);
+    }
+  },
+  
+  // Atualiza o anel de progresso
+  updateProgressRing: function() {
+    const progressRing = document.querySelector('.timer-progress-ring');
+    if (progressRing) {
+      const radius = (this.circuloCarregamentoTamanho / 2) - (this.circuloCarregamentoTamanhoBorda / 2);
+      const circumference = 2 * Math.PI * radius;
+      const progressPercentage = 1 - (this.state.timeLeft / this.state.totalTime);
+      const offset = circumference * progressPercentage;
+      
+      // Define a cor e o offset do anel de progresso
+      progressRing.style.stroke = this.getModeColor();
+      progressRing.style.strokeDasharray = circumference;
+      progressRing.style.strokeDashoffset = offset;
     }
   },
   
@@ -132,36 +257,31 @@ const PomodoroTimer = {
   
   // Define o modo do timer (pomodoro, pausa curta ou pausa longa)
   setMode: function(mode) {
-    this.pauseTimer();
+    // Se o timer estiver rodando, pergunte antes de mudar o modo
+    if (this.state.isRunning) {
+      if (!confirm('O timer está rodando. Deseja mudar o modo e reiniciar o timer?')) {
+        return;
+      }
+      this.pauseTimer();
+    }
+    
     this.state.mode = mode;
     
     // Reseta o timer para o tempo adequado ao modo
-    switch (mode) {
-      case 'pomodoro':
-        this.state.timeLeft = 25 * 60;
-        document.getElementById('pomodoro-timer').style.backgroundColor = '#e44332';
-        break;
-      case 'shortBreak':
-        this.state.timeLeft = 5 * 60;
-        document.getElementById('pomodoro-timer').style.backgroundColor = '#4c9195';
-        break;
-      case 'longBreak':
-        this.state.timeLeft = 15 * 60;
-        document.getElementById('pomodoro-timer').style.backgroundColor = '#457ca3';
-        break;
-    }
+    this.setTimeForCurrentMode();
     
-    // Atualiza a aparência dos botões de modo
-    document.getElementById('mode-pomodoro').style.backgroundColor = mode === 'pomodoro' ? '#e44332' : '';
-    document.getElementById('mode-pomodoro').style.color = mode === 'pomodoro' ? 'white' : '';
+    // Atualiza a cor do anel de progresso
+    this.updateProgressRing();
     
-    document.getElementById('mode-short-break').style.backgroundColor = mode === 'shortBreak' ? '#4c9195' : '';
-    document.getElementById('mode-short-break').style.color = mode === 'shortBreak' ? 'white' : '';
-    
-    document.getElementById('mode-long-break').style.backgroundColor = mode === 'longBreak' ? '#457ca3' : '';
-    document.getElementById('mode-long-break').style.color = mode === 'longBreak' ? 'white' : '';
-    
+    // Atualiza o display do timer
     this.updateTimerDisplay();
+    
+    // Atualiza o ícone do botão para play
+    const startButton = document.querySelector('#start-timer');
+    if (startButton) {
+      startButton.innerHTML = '▶';
+      startButton.title = 'Iniciar';
+    }
   },
   
   // Função chamada quando o timer chega a zero
@@ -172,11 +292,13 @@ const PomodoroTimer = {
     const audio = new Audio('https://soundbible.com/grab.php?id=1746&type=mp3');
     audio.play();
     
-    // Alterna automaticamente entre modos (opcional)
+    // Alterna automaticamente entre modos
     if (this.state.mode === 'pomodoro') {
       this.setMode('shortBreak');
+      this.setActiveButton('#short-break-mode');
     } else {
       this.setMode('pomodoro');
+      this.setActiveButton('#pomodoro-mode');
     }
   }
 };
