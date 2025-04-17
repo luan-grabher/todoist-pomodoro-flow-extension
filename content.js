@@ -1,9 +1,10 @@
 const POMODORO_FLOW_ID = 'pomodoro-flow'; // ID do elemento que contém o app Pomodoro Flow
+const PAGES_WITH_POMODORO_FLOW = ['/app/today']; // Páginas onde o app Pomodoro Flow deve ser exibido
 
 // Script que é executado quando a página do Todoist (app/today) é carregada
 function startPomodoroApp() {
   if (!!document.getElementById(POMODORO_FLOW_ID)) return; // Se o app já existe não faz nada
-
+  if (!PAGES_WITH_POMODORO_FLOW.includes(window.location.pathname)) return; // Se não estamos na página correta, não faz nada
 
   // Cria um elemento para mostrar a mensagem
   const pomodoroFlowApp = document.createElement('div');
