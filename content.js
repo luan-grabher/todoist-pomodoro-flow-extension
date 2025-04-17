@@ -22,19 +22,19 @@ function startPomodoroApp() {
   title.style.margin = '0 0 10px 0';
   pomodoroFlowApp.appendChild(title);
   
-  // Renderiza o cronômetro usando o módulo PomodoroTimer
-  if (typeof PomodoroTimer !== 'undefined') {
-    PomodoroTimer.render(pomodoroFlowApp);
-  } else {
-    pomodoroFlowApp.textContent = 'Erro: Módulo do cronômetro não carregado!';
-  }
-  
   //get element div with data-testid="large-header"
   const header = document.querySelector('div[data-testid="large-header"] > div');
   if (!header) return; // Se o header não existe, não faz nada
 
   // Adiciona a aplicação ao header
   header.appendChild(pomodoroFlowApp);
+
+  // Renderiza o cronômetro usando o módulo PomodoroTimer
+  if (typeof PomodoroTimer !== 'undefined') {
+    PomodoroTimer.render(pomodoroFlowApp);
+  } else {
+    pomodoroFlowApp.textContent = 'Erro: Módulo do cronômetro não carregado!';
+  }
 }
 
 // Tenta adicionar a mensagem assim que o script é carregado

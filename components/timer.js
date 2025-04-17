@@ -51,13 +51,19 @@ const PomodoroTimer = {
   
   // Configura os listeners de eventos para os botões do timer
   setupEventListeners: function() {
-    document.getElementById('start-timer')?.addEventListener('click', () => this.startTimer());
-    document.getElementById('pause-timer')?.addEventListener('click', () => this.pauseTimer());
-    document.getElementById('reset-timer')?.addEventListener('click', () => this.resetTimer());
+    const pomodoroFlow = document.getElementById(POMODORO_FLOW_ID);
+    if (!pomodoroFlow) return; // Se o app Pomodoro Flow não existe, não faz nada
+
+    const pomodoroTimer = document.getElementById('pomodoro-timer');
+    if (!pomodoroTimer) return; // Se o timer não existe, não faz nada
+
+    pomodoroTimer.querySelector('#start-timer')?.addEventListener('click', () => this.startTimer());
+    pomodoroTimer.querySelector('#pause-timer')?.addEventListener('click', () => this.pauseTimer());
+    pomodoroTimer.querySelector('#reset-timer')?.addEventListener('click', () => this.resetTimer());
     
-    document.getElementById('mode-pomodoro')?.addEventListener('click', () => this.setMode('pomodoro'));
-    document.getElementById('mode-short-break')?.addEventListener('click', () => this.setMode('shortBreak'));
-    document.getElementById('mode-long-break')?.addEventListener('click', () => this.setMode('longBreak'));
+    pomodoroTimer.querySelector('#mode-pomodoro')?.addEventListener('click', () => this.setMode('pomodoro'));
+    pomodoroTimer.querySelector('#mode-short-break')?.addEventListener('click', () => this.setMode('shortBreak'));
+    pomodoroTimer.querySelector('#mode-long-break')?.addEventListener('click', () => this.setMode('longBreak'));
   },
   
   // Inicia o cronômetro
