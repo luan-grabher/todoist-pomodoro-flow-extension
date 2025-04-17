@@ -25,7 +25,7 @@
   "content_scripts": [
     {
       "matches": ["https://app.todoist.com/app/*"],
-      "js": ["content.js"]
+      "js": ["components/timer.js", "content.js"]
     }
   ]
 }

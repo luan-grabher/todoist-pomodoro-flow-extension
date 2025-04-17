@@ -6,9 +6,8 @@ function startPomodoroApp() {
   if (!!document.getElementById(POMODORO_FLOW_ID)) return; // Se o app já existe não faz nada
   if (!PAGES_WITH_POMODORO_FLOW.includes(window.location.pathname)) return; // Se não estamos na página correta, não faz nada
 
-  // Cria um elemento para mostrar a mensagem
+  // Cria um elemento para mostrar a aplicação Pomodoro Flow
   const pomodoroFlowApp = document.createElement('div');
-  pomodoroFlowApp.textContent = 'Olá, Pomodoro Flow!';
   pomodoroFlowApp.id = POMODORO_FLOW_ID;
   pomodoroFlowApp.style.padding = '10px';
   pomodoroFlowApp.style.backgroundColor = '#f0f0f0';
@@ -17,11 +16,24 @@ function startPomodoroApp() {
   pomodoroFlowApp.style.borderRadius = '5px';
   pomodoroFlowApp.style.margin = '10px 0';
   
+  // Título da aplicação
+  const title = document.createElement('h3');
+  title.textContent = 'Pomodoro Flow';
+  title.style.margin = '0 0 10px 0';
+  pomodoroFlowApp.appendChild(title);
+  
+  // Renderiza o cronômetro usando o módulo PomodoroTimer
+  if (typeof PomodoroTimer !== 'undefined') {
+    PomodoroTimer.render(pomodoroFlowApp);
+  } else {
+    pomodoroFlowApp.textContent = 'Erro: Módulo do cronômetro não carregado!';
+  }
+  
   //get element div with data-testid="large-header"
   const header = document.querySelector('div[data-testid="large-header"] > div');
   if (!header) return; // Se o header não existe, não faz nada
 
-  // Adiciona a mensagem ao header
+  // Adiciona a aplicação ao header
   header.appendChild(pomodoroFlowApp);
 }
 
