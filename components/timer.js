@@ -54,7 +54,7 @@ const PomodoroTimer = {
       </div>
       
       <!-- Container para os controles e modos à direita -->
-      <div class="timer-right-controls" style="margin-left: 30px; display: flex; flex-direction: column; align-items: flex-start;">
+      <div class="timer-right-controls" style="margin-left: 60px; display: flex; flex-direction: column; align-items: flex-start;">
         
         <!-- Controles principais do timer (play/pause e reset) -->
         <div class="main-controls" style="display: flex; justify-content: flex-start; gap: 10px; margin-bottom: 30px;">

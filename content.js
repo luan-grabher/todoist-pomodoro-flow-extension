@@ -7,27 +7,38 @@ function startPomodoroApp() {
   if (!PAGES_WITH_POMODORO_FLOW.includes(window.location.pathname)) return; // Se não estamos na página correta, não faz nada
 
   // Cria um elemento para mostrar a aplicação Pomodoro Flow
+  const pomodoroFlowAppContainer = document.createElement('div');
+  pomodoroFlowAppContainer.id = POMODORO_FLOW_ID +'-container';
+  pomodoroFlowAppContainer.style.paddingInline = '24%';
+  pomodoroFlowAppContainer.style.color = '#333';
+  pomodoroFlowAppContainer.style.fontWeight = 'bold';  
+  pomodoroFlowAppContainer.style.margin = '10px 0';
+  pomodoroFlowAppContainer.style.display = 'flex';
+
   const pomodoroFlowApp = document.createElement('div');
   pomodoroFlowApp.id = POMODORO_FLOW_ID;
-  pomodoroFlowApp.style.padding = '10px';
   pomodoroFlowApp.style.backgroundColor = '#f0f0f0';
-  pomodoroFlowApp.style.color = '#333';
-  pomodoroFlowApp.style.fontWeight = 'bold';
   pomodoroFlowApp.style.borderRadius = '5px';
-  pomodoroFlowApp.style.margin = '10px 0';
+  pomodoroFlowApp.style.width = '100%';
+  pomodoroFlowApp.style.padding = '10px';
   
   // Título da aplicação
   const title = document.createElement('h3');
   title.textContent = 'Pomodoro Flow';
   title.style.margin = '0 0 10px 0';
   pomodoroFlowApp.appendChild(title);
-  
-  //get element div with data-testid="large-header"
-  const header = document.querySelector('div[data-testid="large-header"] > div');
-  if (!header) return; // Se o header não existe, não faz nada
 
-  // Adiciona a aplicação ao header
-  header.appendChild(pomodoroFlowApp);
+  pomodoroFlowAppContainer.appendChild(pomodoroFlowApp);
+  
+  // Obtém o elemento div com data-testid="task-selection-list-container"
+  const content = document.querySelector('div[data-testid="task-selection-list-container"]');
+  if (!content) return;
+
+  if (content.children.length >= 2) {
+    content.insertBefore(pomodoroFlowAppContainer, content.children[1]);
+  } else {
+    content.appendChild(pomodoroFlowAppContainer);
+  }
 
   // Renderiza o cronômetro usando o módulo PomodoroTimer
   if (typeof PomodoroTimer !== 'undefined') {
