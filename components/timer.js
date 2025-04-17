@@ -6,6 +6,12 @@ const PomodoroTimer = {
   circuloCarregamentoTamanho: 250, // Tamanho do círculo em px
   circuloCarregamentoTamanhoBorda: 24, // Espessura da borda em px
 
+  // Sons do timer
+  sounds: {
+    start: 'https://cdn.pixabay.com/audio/2023/05/29/audio_697c02e935.mp3', // Som de clique para início
+    complete: 'https://cdn.pixabay.com/audio/2024/02/07/audio_c059f11d86.mp3' // Som de alarme para término
+  },
+
   // Estado inicial do timer
   state: {
     isRunning: false,
@@ -170,6 +176,10 @@ const PomodoroTimer = {
   startTimer: function() {
     if (this.state.isRunning) return;
     
+    // Reproduz o som de início do cronômetro
+    const startSound = new Audio(this.sounds.start);
+    startSound.play();
+    
     this.state.isRunning = true;
     
     // Atualiza o ícone do botão para pausa
@@ -299,7 +309,7 @@ const PomodoroTimer = {
     this.pauseTimer();
     
     // Notificação de que o timer acabou
-    const audio = new Audio('https://soundbible.com/grab.php?id=1746&type=mp3');
+    const audio = new Audio(this.sounds.complete);
     audio.play();
     
     // Alterna automaticamente entre modos
