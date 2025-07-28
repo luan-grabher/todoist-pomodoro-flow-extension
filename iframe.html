@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pomodoro Flow - IFrame</title>
+    <style>
+      body {
+        background: #f0f0f0;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        min-height: 100vh;
+      }
+
+      h2 {
+        color: #333;
+        margin-top: 24px;
+        margin-bottom: 8px;
+        font-size: 22px;
+      }
+
+      .pomodoro-iframe-container {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px #0001;
+        padding: 24px 16px;
+        margin: 16px 0 32px 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 350px;
+        min-height: 350px;
+      }
+
+      .pomodoro-footer {
+        color: #aaa;
+        font-size: 13px;
+        margin-top: 12px;
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h2>Pomodoro Flow</h2>
+    <div class="pomodoro-iframe-container" id="pomodoro-iframe-app"></div>
+    <div class="pomodoro-footer">Versão IFrame - Independente do Todoist</div>
+    <script>
+      // --- timer.js BEGIN ---
+      // Arquivo responsável pela lógica e renderização do cronômetro Pomodoro
+      const PomodoroTimer = {
+        circuloCarregamentoTamanho: 250,
+        circuloCarregamentoTamanhoBorda: 24,
+        sounds: {
+          start:
+            "https://cdn.pixabay.com/audio/2023/05/29/audio_697c02e935.mp3",
+          complete:
+            "https://cdn.pixabay.com/audio/2024/02/07/audio_c059f11d86.mp3",
+        },
+        state: {
+          isRunning: false,
+          timeLeft: 25 * 60,
+          totalTime: 25 * 60,
+          mode: "pomodoro",
+          interval: null,
+          startTimestamp: null,
+          endTimestamp: null,
+          checkTimeoutId: null,
+        },
+        render: function (container) {
+          const timerElement = document.createElement("div");
+          timerElement.id = "pomodoro-timer";
+          timerElement.classList.add("pomodoro-timer");
+          timerElement.style.display = "flex";
+          timerElement.style.flexDirection = "row";
+          timerElement.style.alignItems = "center";
+          timerElement.style.justifyContent = "center";
+          timerElement.style.padding = "20px";
+          timerElement.style.borderRadius = "10px";
+          timerElement.style.fontFamily = "Arial, sans-serif";
+          timerElement.style.color = "#333333";
+          const radius =
+            this.circuloCarregamentoTamanho / 2 -
+            this.circuloCarregamentoTamanhoBorda / 2;
+          timerElement.innerHTML = `
+      <div class="timer-left-container">
+        <div class="timer-circle-container" style="position: relative; width: ${
+          this.circuloCarregamentoTamanho
+        }px; height: ${this.circuloCarregamentoTamanho}px;">
+          <div class="timer-progress-bg" style="position: absolute; width: 100%; height: 100%; border-radius: 50%; box-sizing: border-box; border: ${
+            this.circuloCarregamentoTamanhoBorda
+          }px solid #444450;"></div>
+          <svg class="timer-progress" style="position: absolute; width: 100%; height: 100%; transform: rotate(-90deg);">
+            <circle class="timer-progress-ring" cx="${
+              this.circuloCarregamentoTamanho / 2
+            }" cy="${
+            this.circuloCarregamentoTamanho / 2
+          }" r="${radius}" stroke="#6C63FF" stroke-width="${
+            this.circuloCarregamentoTamanhoBorda
+          }" fill="transparent" stroke-linecap="round"></circle>
+          </svg>
+          <div class="timer-content" style="position: absolute; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; border-radius: 50%;">
+            <div class="timer-display" style="font-size: 54px; font-weight: bold; color: #333333;">${this.formatTime(
+              this.state.timeLeft
+            )}</div>
+          </div>
+        </div>
+      </div>
+      <div class="timer-right-controls" style="margin-left: 60px; display: flex; flex-direction: column; align-items: flex-start;">
+        <div class="main-controls" style="display: flex; justify-content: flex-start; gap: 10px; margin-bottom: 30px;">
+          <button id="start-timer" title="Iniciar/Pausar" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #333340; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">▶</button>
+          <button id="reset-timer" title="Reiniciar" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #333340; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">↻</button>
+        </div>
+        <div class="modes-label" style="margin-bottom: 15px; font-size: 16px; color: #333333; font-weight: 600;">
+          Modos:
+        </div>
+        <div class="timer-modes" style="display: flex; align-items: center; justify-content: flex-start; gap: 10px;">
+          <button id="pomodoro-mode" class="mode-btn active-mode" title="Pomodoro" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #472525; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">🍅</button>
+          <button id="short-break-mode" class="mode-btn" title="Pausa Curta" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #333340; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">☕</button>
+          <button id="long-break-mode" class="mode-btn" title="Pausa Longa" style="width: 40px; height: 40px; border-radius: 8px; border: none; background-color: #333340; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">☕<span style="font-size: 10px; position: relative; top: -8px;">x3</span></button>
+        </div>
+      </div>
+    `;
+          container.appendChild(timerElement);
+          this.setupProgressRing();
+          this.setupEventListeners();
+          this.setupVisibilityListener();
+          return timerElement;
+        },
+        setupProgressRing: function () {
+          const progressRing = document.querySelector(".timer-progress-ring");
+          if (progressRing) {
+            const radius =
+              this.circuloCarregamentoTamanho / 2 -
+              this.circuloCarregamentoTamanhoBorda / 2;
+            const circumference = 2 * Math.PI * radius;
+            progressRing.style.strokeDasharray = circumference;
+            progressRing.style.strokeDashoffset = 0;
+            progressRing.style.stroke = this.getModeColor();
+          }
+        },
+        setupEventListeners: function () {
+          const pomodoroTimer = document.getElementById("pomodoro-timer");
+          if (!pomodoroTimer) return;
+          const startButton = pomodoroTimer.querySelector("#start-timer");
+          startButton?.addEventListener("click", () => {
+            if (this.state.isRunning) {
+              this.pauseTimer();
+            } else {
+              this.startTimer();
+            }
+          });
+          const resetButton = pomodoroTimer.querySelector("#reset-timer");
+          resetButton?.addEventListener("click", () => {
+            this.resetTimer();
+          });
+          pomodoroTimer
+            .querySelector("#pomodoro-mode")
+            ?.addEventListener("click", () => {
+              this.setMode("pomodoro");
+              this.setActiveButton("#pomodoro-mode");
+            });
+          pomodoroTimer
+            .querySelector("#short-break-mode")
+            ?.addEventListener("click", () => {
+              this.setMode("shortBreak");
+              this.setActiveButton("#short-break-mode");
+            });
+          pomodoroTimer
+            .querySelector("#long-break-mode")
+            ?.addEventListener("click", () => {
+              this.setMode("longBreak");
+              this.setActiveButton("#long-break-mode");
+            });
+        },
+        setupVisibilityListener: function () {
+          document.addEventListener("visibilitychange", () => {
+            if (
+              document.visibilityState === "visible" &&
+              this.state.isRunning
+            ) {
+              this.updateTimeLeftBasedOnTimestamp();
+              this.updateTimerDisplay();
+              this.updateProgressRing();
+            }
+          });
+        },
+        setActiveButton: function (buttonId) {
+          const modeButtons = document.querySelectorAll(".mode-btn");
+          modeButtons.forEach((btn) => {
+            btn.classList.remove("active-mode");
+            btn.style.backgroundColor = "#333340";
+          });
+          const activeButton = document.querySelector(buttonId);
+          if (activeButton) {
+            activeButton.classList.add("active-mode");
+            if (buttonId === "#pomodoro-mode")
+              activeButton.style.backgroundColor = "#472525";
+            if (buttonId === "#short-break-mode")
+              activeButton.style.backgroundColor = "#2e7d7b";
+            if (buttonId === "#long-break-mode")
+              activeButton.style.backgroundColor = "#2a3d7d";
+          }
+        },
+        getModeColor: function () {
+          switch (this.state.mode) {
+            case "pomodoro":
+              return "#db4c3f";
+            case "shortBreak":
+              return "#2e7d7b";
+            case "longBreak":
+              return "#2a3d7d";
+            default:
+              return "#6C63FF";
+          }
+        },
+        startTimer: function () {
+          if (this.state.isRunning) return;
+          const startSound = new Audio(this.sounds.start);
+          startSound.play();
+          this.state.isRunning = true;
+          const startButton = document.querySelector("#start-timer");
+          if (startButton) {
+            startButton.innerHTML = "❚❚";
+            startButton.title = "Pausar";
+          }
+          const now = Date.now();
+          this.state.startTimestamp = now;
+          this.state.endTimestamp = now + this.state.timeLeft * 1000;
+          this.state.interval = setInterval(() => {
+            this.updateTimeLeftBasedOnTimestamp();
+            this.updateTimerDisplay();
+            this.updateProgressRing();
+          }, 900);
+          this.scheduleCompletionCheck();
+        },
+        updateTimeLeftBasedOnTimestamp: function () {
+          if (!this.state.isRunning || !this.state.endTimestamp) return;
+          const now = Date.now();
+          const remaining = Math.max(
+            0,
+            Math.floor((this.state.endTimestamp - now) / 1000)
+          );
+          this.state.timeLeft = remaining;
+          if (this.state.timeLeft <= 0) {
+            this.timerComplete();
+          }
+        },
+        scheduleCompletionCheck: function () {
+          if (this.state.checkTimeoutId) {
+            clearTimeout(this.state.checkTimeoutId);
+          }
+          if (!this.state.isRunning || this.state.timeLeft <= 0) return;
+          const timeToCompletion = this.state.timeLeft * 1000;
+          this.state.checkTimeoutId = setTimeout(() => {
+            if (this.state.isRunning) {
+              this.timerComplete();
+            }
+          }, timeToCompletion);
+        },
+        pauseTimer: function () {
+          if (!this.state.isRunning) return;
+          this.state.isRunning = false;
+          clearInterval(this.state.interval);
+          if (this.state.checkTimeoutId) {
+            clearTimeout(this.state.checkTimeoutId);
+            this.state.checkTimeoutId = null;
+          }
+          const startButton = document.querySelector("#start-timer");
+          if (startButton) {
+            startButton.innerHTML = "▶";
+            startButton.title = "Iniciar";
+          }
+        },
+        resetTimer: function () {
+          this.pauseTimer();
+          this.setTimeForCurrentMode();
+          this.state.startTimestamp = null;
+          this.state.endTimestamp = null;
+          this.updateTimerDisplay();
+          this.updateProgressRing();
+        },
+        setTimeForCurrentMode: function () {
+          switch (this.state.mode) {
+            case "pomodoro":
+              this.state.timeLeft = 25 * 60;
+              this.state.totalTime = 25 * 60;
+              break;
+            case "shortBreak":
+              this.state.timeLeft = 5 * 60;
+              this.state.totalTime = 5 * 60;
+              break;
+            case "longBreak":
+              this.state.timeLeft = 15 * 60;
+              this.state.totalTime = 15 * 60;
+              break;
+          }
+        },
+        updateTimerDisplay: function () {
+          const timerDisplay = document.querySelector(".timer-display");
+          if (timerDisplay) {
+            timerDisplay.textContent = this.formatTime(this.state.timeLeft);
+          }
+        },
+        updateProgressRing: function () {
+          const progressRing = document.querySelector(".timer-progress-ring");
+          if (progressRing) {
+            const radius =
+              this.circuloCarregamentoTamanho / 2 -
+              this.circuloCarregamentoTamanhoBorda / 2;
+            const circumference = 2 * Math.PI * radius;
+            const progressPercentage =
+              1 - this.state.timeLeft / this.state.totalTime;
+            const offset = circumference * progressPercentage;
+            progressRing.style.stroke = this.getModeColor();
+            progressRing.style.strokeDasharray = circumference;
+            progressRing.style.strokeDashoffset = offset;
+          }
+        },
+        formatTime: function (seconds) {
+          const minutes = Math.floor(seconds / 60);
+          const remainingSeconds = seconds % 60;
+          return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+            .toString()
+            .padStart(2, "0")}`;
+        },
+        setMode: function (mode) {
+          if (this.state.isRunning) {
+            if (
+              !confirm(
+                "O timer está rodando. Deseja mudar o modo e reiniciar o timer?"
+              )
+            ) {
+              return;
+            }
+            this.pauseTimer();
+          }
+          this.state.mode = mode;
+          this.setTimeForCurrentMode();
+          this.updateProgressRing();
+          this.updateTimerDisplay();
+          const startButton = document.querySelector("#start-timer");
+          if (startButton) {
+            startButton.innerHTML = "▶";
+            startButton.title = "Iniciar";
+          }
+          this.state.startTimestamp = null;
+          this.state.endTimestamp = null;
+        },
+        timerComplete: function () {
+          if (!this.state.isRunning) return;
+          this.pauseTimer();
+          const audio = new Audio(this.sounds.complete);
+          audio.play();
+          if (this.state.mode === "pomodoro") {
+            this.setMode("shortBreak");
+            this.setActiveButton("#short-break-mode");
+          } else {
+            this.setMode("pomodoro");
+            this.setActiveButton("#pomodoro-mode");
+          }
+        },
+      };
+      // --- timer.js END ---
+
+      // Inicializa o Pomodoro no iframe
+      window.addEventListener("DOMContentLoaded", function () {
+        const container = document.getElementById("pomodoro-iframe-app");
+        PomodoroTimer.render(container);
+      });
+    </script>
+  </body>
+</html>
